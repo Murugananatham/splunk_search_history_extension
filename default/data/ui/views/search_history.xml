@@ -1,0 +1,49 @@
+<form version="1.1" theme="dark" hideChrome="true">
+  <label>Search History</label>
+  <search id="base_search_history">
+    <query>
+      index=_audit action=search info=granted search=* NOT "search_id='scheduler" NOT "search='|history" NOT "search_id='_*" NOT "user=splunk-system-user" NOT internal_monitoring NOT "search='typeahead" NOT "search='| metadata type=* | search totalCount&gt;0"  | stats values(search) as Search by user _time 
+    </query>
+    <earliest>$time.earliest$</earliest>
+    <latest>$time.latest$</latest>
+  </search>
+  <fieldset submitButton="true" autoRun="false">
+    <input type="time" token="time" searchWhenChanged="false">
+      <label>Time Range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="user_token" searchWhenChanged="false">
+      <label>User</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <fieldForLabel>user</fieldForLabel>
+      <fieldForValue>user</fieldForValue>
+      <search>
+        <query>index=_audit action=search info=granted search=* NOT "search_id='scheduler" NOT "search='|history" NOT "search_id='_*" NOT "user=splunk-system-user" NOT internal_monitoring NOT "search='typeahead" NOT "search='| metadata type=* | search totalCount&gt;0"  | stats count  by user</query>
+      </search>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Test</title>
+      <table>
+        <search id="post_process_search_panel" base="base_search_history">
+          <query>| rex field=Search mode=sed "s/^'//g" 
+| rex field=Search mode=sed "s/'$$//g" 
+| mvexpand Search 
+| search user="$form.user_token$" 
+| sort - _time 
+| eval Date = strftime(_time,"%Y-%m-%d"), Time = strftime(_time,"%H:%M")
+| table Date Time user Search</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="wrap">false</option>
+      </table>
+    </panel>
+  </row>
+</form>

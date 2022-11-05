@@ -33,3 +33,9 @@ export = system
 [viewstates]
 access = read : [ * ], write : [ * ]
 export = system
+
+
+[views/search_history]
+owner = admin
+version = 9.0.1
+modtime = 1667679330.327427200
